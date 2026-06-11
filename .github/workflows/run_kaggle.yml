@@ -28,8 +28,8 @@ jobs:
           # 1. Pull the notebook and its configuration file
           python -m kaggle kernels pull chauhanrj/ollamaserver-youtube-automation -p . -m
           
-          # 2. Modify the JSON file using Python (exactly like your local test!)
-          python -c "import json; f=open('kernel-metadata.json','r+'); d=json.load(f); d['enable_gpu']=True; f.seek(0); json.dump(d,f,indent=4); f.truncate()"
+          # 2. Modify the JSON file using Python to force BOTH GPU and Internet access
+          python -c "import json; f=open('kernel-metadata.json','r+'); d=json.load(f); d['enable_gpu']=True; d['enable_internet']=True; f.seek(0); json.dump(d,f,indent=4); f.truncate()"
           
-          # 3. Push to Kaggle to trigger the dual-GPU execution
+          # 3. Push back to Kaggle with proper internet/hardware flags
           python -m kaggle kernels push -p .
