@@ -1,0 +1,36 @@
+name: Run Kaggle Notebook Daily
+
+on:
+  schedule:
+    # 20:30 UTC is exactly 2:00 AM IST (Indian Standard Time)
+    - cron: '30 20 * * *' 
+  workflow_dispatch: # Allows you to also run it manually anytime
+
+jobs:
+  run-notebook:
+    runs-on: ubuntu-latest
+    env:
+      KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+      KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Kaggle API
+        run: pip install kaggle
+
+      - name: Push and Run Notebook
+        run: |
+          # 1. Pull your existing notebook metadata from Kaggle
+          kaggle notebooks metadata chauhanrj/ollamaserver-youtube-automation
+          
+          # 2. Modify the metadata JSON file to force GPU usage
+          sed -i 's/"enable_gpu": false/"enable_gpu": true/' notebook-metadata.json
+          
+          # 3. Tell Kaggle to run it specifically using the T4 x2 Dual GPU configuration
+          kaggle notebooks push -p . --accelerator NvidiaTeslaT4
