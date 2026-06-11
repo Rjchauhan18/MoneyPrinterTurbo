@@ -4,15 +4,14 @@ on:
   schedule:
     # 20:30 UTC is exactly 2:00 AM IST (Indian Standard Time)
     - cron: '30 20 * * *' 
-  workflow_dispatch:
+  workflow_dispatch: # Allows you to also run it manually anytime
 
 jobs:
   run-notebook:
     runs-on: ubuntu-latest
-    # VVV --- THIS IS THE UPDATED PART --- VVV
     env:
-      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_KEY }}
-    # ^^^ -------------------------------- ^^^
+      # Fixed the secret mapping to match the new token name
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -23,55 +22,18 @@ jobs:
           python-version: '3.10'
 
       - name: Install Kaggle API
-        run: pip install kaggle
+        # Forced the installation of v1.8.4 so it understands the new token
+        run: pip install kaggle==1.8.4
 
       - name: Push and Run Notebook
         run: |
-          # 1. Pull the notebook and its configuration file
+          # 1. Pull the notebook and its configuration file (kernel-metadata.json)
           kaggle kernels pull chauhanrj/ollamaserver-youtube-automation -p . -m
           
           # 2. Modify the metadata to ensure GPU is enabled
+          # (We run both commands to catch whether the JSON uses strings or booleans)
           sed -i 's/"enable_gpu": "false"/"enable_gpu": "true"/' kernel-metadata.json
           sed -i 's/"enable_gpu": false/"enable_gpu": true/' kernel-metadata.json
           
-          # 3. Push to Kaggle. 
+          # 3. Push to Kaggle. It will read your existing T4 settings from the pulled notebook!
           kaggle kernels push -p .
-
-# name: Run Kaggle Notebook Daily
-
-# on:
-#   schedule:
-#     # 20:30 UTC is exactly 2:00 AM IST (Indian Standard Time)
-#     - cron: '30 20 * * *' 
-#   workflow_dispatch: # Allows you to also run it manually anytime
-
-# jobs:
-#   run-notebook:
-#     runs-on: ubuntu-latest
-#     env:
-#       KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
-#       KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v4
-
-#       - name: Set up Python
-#         uses: actions/setup-python@v5
-#         with:
-#           python-version: '3.10'
-
-#       - name: Install Kaggle API
-#         run: pip install kaggle
-
-#       - name: Push and Run Notebook
-#         run: |
-#           # 1. Pull the notebook and its configuration file (kernel-metadata.json)
-#           kaggle kernels pull chauhanrj/ollamaserver-youtube-automation -p . -m
-          
-#           # 2. Modify the metadata to ensure GPU is enabled
-#           # (We run both commands to catch whether the JSON uses strings or booleans)
-#           sed -i 's/"enable_gpu": "false"/"enable_gpu": "true"/' kernel-metadata.json
-#           sed -i 's/"enable_gpu": false/"enable_gpu": true/' kernel-metadata.json
-          
-#           # 3. Push to Kaggle. It will read your existing T4 settings from the pulled notebook!
-#           kaggle kernels push -p .
